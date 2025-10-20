@@ -32,6 +32,7 @@ namespace ray {
 /// Encapsulates non-resource artifacts that evidence work when present.
 enum WorkFootprint {
   NODE_WORKERS = 1,
+  PULLING_FROM_OBJECT_STORE = 2,
 };
 
 // Represents artifacts of a node that can be busy or idle.
