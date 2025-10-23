@@ -173,52 +173,29 @@ void GcsTaskManager::GcsTaskManagerStorage::UpdateExistingTaskAttempt(
     const std::shared_ptr<GcsTaskManager::GcsTaskManagerStorage::TaskEventLocator> &loc,
     const rpc::TaskEvents &task_events) {
   auto &existing_task = loc->GetTaskEventsMutable();
-  // Update the tracking
-  if (task_events.has_task_info() && !existing_task.has_task_info()) {
-    stats_counter_.Increment(kTaskTypeToCounterType.at(task_events.task_info().type()));
-  }
+  // // Update the tracking
+  // if (task_events.has_task_info() && !existing_task.has_task_info()) {
+  //   stats_counter_.Increment(kTaskTypeToCounterType.at(task_events.task_info().type()));
+  // }
 
-  // Update the task event.
-  if (task_events.has_task_info()) {
-    existing_task.mutable_task_info()->CopyFrom(task_events.task_info());
-  }
-  if (task_events.has_profile_events()) {
-    existing_task.mutable_profile_events()->CopyFrom(task_events.profile_events());
-  }
-  if (task_events.has_state_updates()) {
-    auto state_updates = existing_task.mutable_state_updates();
-    for (const auto &[state, timestamp] : task_events.state_updates().state_ts_ns()) {
-      (*state_updates->mutable_state_ts_ns())[state] = timestamp;
-    }
-    if (task_events.state_updates().has_error_info()) {
-      state_updates->mutable_error_info()->CopyFrom(
-          task_events.state_updates().error_info());
-    }
-    if (task_events.state_updates().has_worker_id()) {
-      state_updates->set_worker_id(task_events.state_updates().worker_id());
-    }
-    if (task_events.state_updates().has_node_id()) {
-      state_updates->set_node_id(task_events.state_updates().node_id());
-    }
-    if (task_events.state_updates().has_worker_pid()) {
-      state_updates->set_worker_pid(task_events.state_updates().worker_pid());
-    }
-  }
+  // // Update the task event.
+  // existing_task.MergeFrom(task_events);
 
-  // Truncate the profile events if needed.
-  auto max_num_profile_events_per_task =
-      RayConfig::instance().task_events_max_num_profile_events_per_task();
-  if (existing_task.has_profile_events() &&
-      existing_task.profile_events().events_size() > max_num_profile_events_per_task) {
-    auto to_drop =
-        existing_task.profile_events().events_size() - max_num_profile_events_per_task;
-    existing_task.mutable_profile_events()->mutable_events()->DeleteSubrange(0, to_drop);
+  // // Truncate the profile events if needed.
+  // auto max_num_profile_events_per_task =
+  //     RayConfig::instance().task_events_max_num_profile_events_per_task();
+  // if (existing_task.has_profile_events() &&
+  //     existing_task.profile_events().events_size() > max_num_profile_events_per_task) {
+  //   auto to_drop =
+  //       existing_task.profile_events().events_size() - max_num_profile_events_per_task;
+  //   existing_task.mutable_profile_events()->mutable_events()->DeleteSubrange(0,
+  //   to_drop);
 
-    // Update the tracking per job
-    auto job_id = JobID::FromBinary(existing_task.job_id());
-    job_task_summary_[job_id].RecordProfileEventsDropped(to_drop);
-    stats_counter_.Increment(kTotalNumProfileTaskEventsDropped, to_drop);
-  }
+  //   // Update the tracking per job
+  //   auto job_id = JobID::FromBinary(existing_task.job_id());
+  //   job_task_summary_[job_id].RecordProfileEventsDropped(to_drop);
+  //   stats_counter_.Increment(kTotalNumProfileTaskEventsDropped, to_drop);
+  // }
 
   // Move the task events around different gc priority list.
   auto target_list_index = gc_policy_->GetTaskListPriority(existing_task);
@@ -328,7 +305,7 @@ GcsTaskManager::GcsTaskManagerStorage::UpdateOrInitTaskEventLocator(
   auto loc_itr = primary_index_.find(task_attempt);
   if (loc_itr != primary_index_.end()) {
     // Merge with an existing entry.
-    // UpdateExistingTaskAttempt(loc_itr->second, events_by_task);
+    UpdateExistingTaskAttempt(loc_itr->second, events_by_task);
     return loc_itr->second;
   }
 
