@@ -258,6 +258,7 @@ __all__ += [
     "autoscaler",
     "data",
     "internal",
+    "opencog",
     "util",
     "widgets",
     "workflow",
@@ -287,13 +288,14 @@ __all__ += [
 if TYPE_CHECKING:
     from ray import autoscaler
     from ray import data
+    from ray import opencog
     from ray import workflow
 else:
 
     def __getattr__(name: str):
         import importlib
 
-        if name in ["data", "workflow", "autoscaler"]:
+        if name in ["data", "workflow", "autoscaler", "opencog"]:
             return importlib.import_module("." + name, __name__)
         raise AttributeError(f"module {__name__!r} has no attribute {name!r}")
 
